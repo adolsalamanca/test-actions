@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request_target:
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  authorize:
+    environment:
+      ${{ github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      'external-contributors' || 'internal-contributors' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: true
+  build-and-test-extension:
+    needs: authorize
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "I'm reading some secrets..."
+          echo "MY_SECRET: ${{ secrets.MY_SECRET }}"
+    
